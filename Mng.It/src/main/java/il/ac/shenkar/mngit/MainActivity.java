@@ -1,15 +1,15 @@
 package il.ac.shenkar.mngit;
 
-import android.support.v7.app.ActionBarActivity;
-import android.support.v7.app.ActionBar;
-import android.support.v4.app.Fragment;
+import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v7.app.ActionBarActivity;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.os.Build;
+import android.widget.ListView;
 
 public class MainActivity extends ActionBarActivity {
 
@@ -20,7 +20,7 @@ public class MainActivity extends ActionBarActivity {
 
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.container, new PlaceholderFragment())
+                    .add(R.id.container, new TaskListFragment())
                     .commit();
         }
     }
@@ -39,27 +39,42 @@ public class MainActivity extends ActionBarActivity {
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-        if (id == R.id.action_settings) {
-            return true;
+        switch(item.getItemId())
+        {
+            case R.id.action_add_task:
+                Intent intent = new Intent(getApplicationContext(), CreateTaskActivity.class);
+                startActivity(intent);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
         }
-        return super.onOptionsItemSelected(item);
     }
 
     /**
-     * A placeholder fragment containing a simple view.
+     * A fragment containing the task list.
      */
-    public static class PlaceholderFragment extends Fragment {
+    public static class TaskListFragment extends Fragment {
 
-        public PlaceholderFragment() {
-        }
+        private ListView listView;
+        private TaskListBaseAdapter adapter;
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                 Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_main, container, false);
+
+            adapter = new TaskListBaseAdapter(getActivity());
+
+            listView = (ListView) rootView.findViewById(R.id.listV_main);
+            listView.setAdapter(adapter);
+
             return rootView;
         }
-    }
 
+        @Override
+        public void onResume() {
+            super.onResume();
+            adapter.notifyDataSetChanged();
+        }
+    }
 }
