@@ -31,16 +31,19 @@ public class CreateTaskActivity extends ActionBarActivity {
      */
     public static class CreateTaskFragment extends Fragment {
 
+        private EditText editText;
+        private Button createTaskButton;
+
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
             View rootView = inflater.inflate(R.layout.fragment_create, container, false);
 
-            Button createTaskButton = (Button) rootView.findViewById(R.id.createButton);
+            editText = (EditText) rootView.findViewById(R.id.edit_message);
+            createTaskButton = (Button) rootView.findViewById(R.id.createButton);
             createTaskButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    EditText editText = (EditText) v.findViewById(R.id.edit_message);
                     String message = editText.getText().toString();
 
                     setTask(new TaskDetails(message));
