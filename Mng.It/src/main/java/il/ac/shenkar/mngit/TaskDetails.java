@@ -6,9 +6,11 @@ package il.ac.shenkar.mngit;
 public class TaskDetails {
     private long id;
     private String description;
+    private String location;
 
-    public TaskDetails(String description) {
+    public TaskDetails(String description, String location) {
         this.description = description;
+        this.location = location;
     }
 
     public String getDescription() {
@@ -25,5 +27,13 @@ public class TaskDetails {
 
     public void setId(long id) {
         this.id = id;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
     }
 }

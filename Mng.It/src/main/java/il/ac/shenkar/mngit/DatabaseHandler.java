@@ -25,6 +25,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     // Contacts Table Columns names
     private static final String KEY_ID = "id";
     private static final String KEY_DESC = "description";
+    private static final String KEY_LOC = "location";
 
     public DatabaseHandler(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
@@ -34,8 +35,8 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     @Override
     public void onCreate(SQLiteDatabase db) {
         String CREATE_CONTACTS_TABLE = "CREATE TABLE " + TABLE_TASKS + "("
-                + KEY_ID + " INTEGER PRIMARY KEY," + KEY_DESC + " TEXT"
-                + ")";
+                + KEY_ID + " INTEGER PRIMARY KEY," + KEY_DESC + " TEXT,"
+                + KEY_LOC + " TEXT" + ")";
         db.execSQL(CREATE_CONTACTS_TABLE);
     }
 
@@ -56,6 +57,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
 
         ContentValues values = new ContentValues();
         values.put(KEY_DESC, task.getDescription()); // Task Description
+        values.put(KEY_LOC, task.getLocation()); // Task Location
 
         // Inserting Row
         resultId = db.insert(TABLE_TASKS, null, values);
@@ -76,7 +78,7 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         // looping through all rows and adding to list
         if (cursor.moveToFirst()) {
             do {
-                TaskDetails task = new TaskDetails(cursor.getString(1));
+                TaskDetails task = new TaskDetails(cursor.getString(1), cursor.getString(2));
                 task.setId(Integer.parseInt(cursor.getString(0)));
 
                 // Adding task to list

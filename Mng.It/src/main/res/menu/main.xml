@@ -1,8 +1,10 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="il.ac.shenkar.mngit.MainActivity">
+    tools:context="il.ac.shenkar.mngit.MainActivity"
+    xmlns:mngit="http://schemas.android.com/apk/res-auto">
 
     <item android:id="@+id/action_add_task"
         android:icon="@drawable/ic_action_new"
-        android:title="@string/action_add_task"/>
+        android:title="@string/action_add_task"
+        mngit:showAsAction="ifRoom"/>
 </menu>
