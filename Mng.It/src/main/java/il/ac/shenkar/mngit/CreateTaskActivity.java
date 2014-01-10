@@ -42,11 +42,12 @@ public class CreateTaskActivity extends ActionBarActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_create);
 
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.container, new CreateTaskFragment())
+                    .add(R.id.create_container, new CreateTaskFragment())
+                    .add(R.id.location_container, new LocationFragment())
                     .commit();
         }
     }
@@ -66,47 +67,91 @@ public class CreateTaskActivity extends ActionBarActivity {
     /**
      * A fragment containing the task creation.
      */
-    public static class CreateTaskFragment extends Fragment implements
-            GooglePlayServicesClient.ConnectionCallbacks,
-            GooglePlayServicesClient.OnConnectionFailedListener{
-
-        private final static int
-                CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
+    private static class CreateTaskFragment extends Fragment {
 
         private EditText taskDesc;
         private Button createTaskButton;
-        private EditText taskLoc;
-        private LocationClient locationClient;
-        private GoogleMap googleMap;
-        private Marker marker;
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
+
             View rootView = inflater.inflate(R.layout.fragment_create, container, false);
 
+            try {
+                taskDesc = (EditText) rootView.findViewById(R.id.edit_message);
+                createTaskButton = (Button) rootView.findViewById(R.id.createButton);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return rootView;
+            }
+            createTaskButton.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    EditText taskLoc = (EditText) getActivity().findViewById(R.id.edit_location);
+
+                    String description;
+                    try {
+                        description = taskDesc.getText().toString();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        description = "";
+                    }
+
+                    String location;
+                    try {
+                        location = taskLoc.getText().toString();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        location = "";
+                    }
+
+                    TaskListDB.getInstance(getActivity()).addTask(new TaskDetails(description, location));
+                    getActivity().finish();
+                }
+            });
+
+            return rootView;
+        }
+    }
+
+    /**
+     * fragment to handle all the location activities.
+     */
+    private static class LocationFragment extends Fragment implements
+            GooglePlayServicesClient.ConnectionCallbacks,
+            GooglePlayServicesClient.OnConnectionFailedListener{
+
+        private LocationClient locationClient;
+        private GoogleMap googleMap;
+        private Marker marker;
+        private EditText taskLoc;
+        private final static int
+                CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
+
+        @Override
+        public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+
+            View rootView = inflater.inflate(R.layout.fragment_location, container, false);
             locationClient = new LocationClient(getActivity(), this, this);
-            taskDesc = (EditText) rootView.findViewById(R.id.edit_message);
-            taskLoc = (EditText) rootView.findViewById(R.id.edit_location);
-            taskLoc.setText("");
+
+            try {
+                taskLoc = (EditText) rootView.findViewById(R.id.edit_location);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return rootView;
+            }
             taskLoc.setOnEditorActionListener(new TextView.OnEditorActionListener() {
                 @Override
                 public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
                     if (actionId == EditorInfo.IME_ACTION_DONE) {
-                        lookUp(taskLoc.getText().toString());
+                        try {
+                            lookUp(taskLoc.getText().toString());
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
                     return false;
-                }
-            });
-            createTaskButton = (Button) rootView.findViewById(R.id.createButton);
-            createTaskButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    String description = taskDesc.getText().toString();
-                    String location = taskLoc.getText().toString();
-
-                    setTask(new TaskDetails(description, location));
-                    getActivity().finish();
                 }
             });
 
@@ -175,11 +220,6 @@ public class CreateTaskActivity extends ActionBarActivity {
             }
         }
 
-        public void setTask(TaskDetails task)
-        {
-            TaskListDB.getInstance(getActivity()).addTask(task);
-        }
-
         /**
          * Lookup the address in input, format an output string and update map if possible
          */
@@ -189,7 +229,6 @@ public class CreateTaskActivity extends ActionBarActivity {
 
         /**
          * Display a marker on the map and reposition the camera according to location
-         * @param latLng
          */
         private void updateMap(LatLng latLng){
             if (googleMap == null){
@@ -221,9 +260,7 @@ public class CreateTaskActivity extends ActionBarActivity {
                     List<Address> addresses = geoCoder.getFromLocationName(params[0], 1);
                     if (addresses.size() >= 1) {
                         Address address = addresses.get(0);
-                        LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
-
-                        return latLng;
+                        return new LatLng(address.getLatitude(), address.getLongitude());
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
