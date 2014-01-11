@@ -1,16 +1,15 @@
 package il.ac.shenkar.mngit;
 
-import android.content.Intent;
-import android.content.IntentSender;
 import android.location.Address;
 import android.location.Geocoder;
-import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
@@ -20,9 +19,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.analytics.tracking.android.EasyTracker;
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesClient;
-import com.google.android.gms.location.LocationClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.SupportMapFragment;
@@ -36,20 +32,48 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Created by Ori on 1/10/14.
+ * Created by Ori on 1/11/14.
  */
-public class CreateTaskActivity extends ActionBarActivity {
+public class ShowTaskActivity extends ActionBarActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_create);
+        setContentView(R.layout.activity_show);
 
         if (savedInstanceState == null) {
             getSupportFragmentManager().beginTransaction()
-                    .add(R.id.create_container, new CreateTaskFragment())
-                    .add(R.id.location_container, new LocationFragment())
+                    .add(R.id.show_edit_container, new EditTaskFragment())
+                    .add(R.id.show_location_container, new EditTaskLocFragment())
                     .commit();
+        }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+
+        // Inflate the menu; this adds items to the action bar if it is present.
+        getMenuInflater().inflate(R.menu.task, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        // Handle action bar item clicks here. The action bar will
+        // automatically handle clicks on the Home/Up button, so long
+        // as you specify a parent activity in AndroidManifest.xml.
+        switch(item.getItemId())
+        {
+            case R.id.action_remove_task:
+                int position = getIntent().getIntExtra("POSITION", -1);
+                if(position != -1)
+                {
+                    TaskListDB.getInstance(this).removeTask(position);
+                }
+                finish();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
         }
     }
 
@@ -66,30 +90,37 @@ public class CreateTaskActivity extends ActionBarActivity {
     }
 
     /**
-     * A fragment containing the task creation.
+     * A fragment containing the task title.
      */
-    public static class CreateTaskFragment extends Fragment {
+    public static class EditTaskFragment extends Fragment {
 
         private EditText taskDesc;
-        private Button createTaskButton;
+        private Button editTaskButton;
+        private int position;
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
 
-            View rootView = inflater.inflate(R.layout.fragment_create, container, false);
+            View rootView = inflater.inflate(R.layout.fragment_edit, container, false);
 
+            position = getActivity().getIntent().getIntExtra("POSITION", -1);
             try {
-                taskDesc = (EditText) rootView.findViewById(R.id.edit_message);
-                createTaskButton = (Button) rootView.findViewById(R.id.createButton);
+                taskDesc = (EditText) rootView.findViewById(R.id.show_edit_message);
+                editTaskButton = (Button) rootView.findViewById(R.id.show_editButton);
             } catch (Exception e) {
                 e.printStackTrace();
                 return rootView;
             }
-            createTaskButton.setOnClickListener(new View.OnClickListener() {
+            if(position != -1)
+            {
+                TaskDetails currentTask = TaskListDB.getInstance(getActivity()).getTask(position);
+                taskDesc.setText(currentTask.getDescription());
+            }
+            editTaskButton.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View v) {
-                    EditText taskLoc = (EditText) getActivity().findViewById(R.id.edit_location);
+                    EditText taskLoc = (EditText) getActivity().findViewById(R.id.show_edit_location);
 
                     String description;
                     try {
@@ -107,7 +138,13 @@ public class CreateTaskActivity extends ActionBarActivity {
                         location = "";
                     }
 
-                    TaskListDB.getInstance(getActivity()).addTask(new TaskDetails(description, location));
+                    if(position != -1)
+                    {
+                        TaskDetails currentTask = TaskListDB.getInstance(getActivity()).getTask(position);
+                        currentTask.setDescription(description);
+                        currentTask.setLocation(location);
+                        TaskListDB.getInstance(getActivity()).updateTask(position, currentTask);
+                    }
                     getActivity().finish();
                 }
             });
@@ -117,27 +154,20 @@ public class CreateTaskActivity extends ActionBarActivity {
     }
 
     /**
-     * fragment to handle all the location activities.
+     * A fragment containing the task location.
      */
-    public static class LocationFragment extends Fragment implements
-            GooglePlayServicesClient.ConnectionCallbacks,
-            GooglePlayServicesClient.OnConnectionFailedListener{
+    public static class EditTaskLocFragment extends Fragment {
 
-        private LocationClient locationClient;
         private GoogleMap googleMap;
         private Marker marker;
         private EditText taskLoc;
-        private final static int
-                CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
 
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-
-            View rootView = inflater.inflate(R.layout.fragment_location, container, false);
-            locationClient = new LocationClient(getActivity(), this, this);
+            View rootView = inflater.inflate(R.layout.fragment_show_loc, container, false);
 
             try {
-                taskLoc = (EditText) rootView.findViewById(R.id.edit_location);
+                taskLoc = (EditText) rootView.findViewById(R.id.show_edit_location);
             } catch (Exception e) {
                 e.printStackTrace();
                 return rootView;
@@ -165,60 +195,18 @@ public class CreateTaskActivity extends ActionBarActivity {
                 googleMap.setMyLocationEnabled(true);
             }
 
+            int position = getActivity().getIntent().getIntExtra("POSITION", -1);
+            if(position != -1)
+            {
+                TaskDetails currentTask = TaskListDB.getInstance(getActivity()).getTask(position);
+                if(currentTask.getLocation() != null)
+                {
+                    taskLoc.setText(currentTask.getLocation());
+                    lookUp(currentTask.getLocation());
+                }
+            }
+
             return rootView;
-        }
-
-        @Override
-        public void onStart() {
-            super.onStart();
-            // Connect the client.
-            locationClient.connect();
-        }
-
-        @Override
-        public void onStop() {
-            // Disconnecting the client invalidates it.
-            locationClient.disconnect();
-            super.onStop();
-        }
-
-        @Override
-        public void onConnected(Bundle bundle) {
-            // Display the connection status
-            Location location = locationClient.getLastLocation();
-            if (location == null){
-                return;
-            }
-
-            new GeocoderLocationTask().execute(location);
-        }
-
-        @Override
-        public void onDisconnected() {
-        }
-
-        @Override
-        public void onConnectionFailed(ConnectionResult connectionResult) {
-            try {
-                // Start an Activity that tries to resolve the error
-                connectionResult.startResolutionForResult(getActivity(), CONNECTION_FAILURE_RESOLUTION_REQUEST);
-            } catch (IntentSender.SendIntentException e) {
-                e.printStackTrace();
-            }
-        }
-
-        @Override
-        public void onActivityResult(int requestCode, int resultCode, Intent data) {
-            switch (requestCode){
-                case CONNECTION_FAILURE_RESOLUTION_REQUEST:
-                    switch (resultCode){
-                        case RESULT_OK:
-                            locationClient.connect();
-                            break;
-                        default:
-                    }
-                    break;
-            }
         }
 
         /**
@@ -254,9 +242,15 @@ public class CreateTaskActivity extends ActionBarActivity {
         {
             @Override
             protected LatLng doInBackground(String... params) {
-                Geocoder geoCoder;
 
-                geoCoder = new Geocoder(getActivity(), new Locale("iw_IL"));
+                Geocoder geoCoder;
+                try {
+                    geoCoder = new Geocoder(getActivity(), new Locale("iw_IL"));
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return null;
+                }
+
                 try {
                     List<Address> addresses = geoCoder.getFromLocationName(params[0], 1);
                     if (addresses.size() >= 1) {
@@ -275,41 +269,6 @@ public class CreateTaskActivity extends ActionBarActivity {
                 if(latLng != null)
                 {
                     updateMap(latLng);
-                }
-                else
-                {
-                    Toast.makeText(getActivity(), "Location Failed!", Toast.LENGTH_SHORT).show();
-                }
-            }
-        }
-
-        private class GeocoderLocationTask extends AsyncTask<Location, Void, Address>
-        {
-            @Override
-            protected Address doInBackground(Location... params) {
-                Geocoder geoCoder;
-                Location location;
-
-                geoCoder = new Geocoder(getActivity(), new Locale("iw_IL"));
-                location = params[0];
-                try {
-                    List<Address> addresses =
-                            geoCoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
-                    if (addresses.size()>0){
-                        return addresses.get(0);
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                return null;
-            }
-
-            @Override
-            protected void onPostExecute(Address address) {
-                if(address != null)
-                {
-                    taskLoc.setText(address.getAddressLine(0) + " " + address.getAddressLine(1));
-                    lookUp(address.getAddressLine(0) + " " + address.getAddressLine(1));
                 }
                 else
                 {

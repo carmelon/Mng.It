@@ -40,6 +40,14 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="il.ac.shenkar.mngit.MainActivity" />
         </activity>
+        <activity
+            android:name="il.ac.shenkar.mngit.ShowTaskActivity"
+            android:label="@string/activity_showTask"
+            android:parentActivityName="il.ac.shenkar.mngit.MainActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="il.ac.shenkar.mngit.MainActivity" />
+        </activity>
     </application>
 
 </manifest>

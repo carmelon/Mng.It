@@ -41,6 +41,11 @@ public class TaskListDB {
         return taskArray.get(position);
     }
 
+    public void updateTask(int position, TaskDetails task) {
+        taskArray.set(position, task);
+        db.updateTask(task);
+    }
+
     public int getSize() {
         return taskArray.size();
     }

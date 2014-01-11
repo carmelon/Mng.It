@@ -7,10 +7,12 @@ public class TaskDetails {
     private long id;
     private String description;
     private String location;
+    private Boolean done;
 
     public TaskDetails(String description, String location) {
         this.description = description;
         this.location = location;
+        this.done = false;
     }
 
     public String getDescription() {
@@ -35,5 +37,13 @@ public class TaskDetails {
 
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    public Boolean getDone() {
+        return done;
+    }
+
+    public void setDone(Boolean done) {
+        this.done = done;
     }
 }

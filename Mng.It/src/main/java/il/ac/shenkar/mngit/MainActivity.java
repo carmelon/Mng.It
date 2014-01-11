@@ -14,7 +14,6 @@ import android.widget.ListView;
 import com.google.analytics.tracking.android.EasyTracker;
 
 public class MainActivity extends ActionBarActivity {
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -29,17 +28,12 @@ public class MainActivity extends ActionBarActivity {
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         switch(item.getItemId())
         {
             case R.id.action_add_task:
@@ -67,7 +61,6 @@ public class MainActivity extends ActionBarActivity {
      * A fragment containing the task list.
      */
     public static class TaskListFragment extends Fragment {
-
         private ListView listView;
         private TaskListBaseAdapter adapter;
 
@@ -78,9 +71,14 @@ public class MainActivity extends ActionBarActivity {
 
             adapter = new TaskListBaseAdapter(getActivity());
 
-            listView = (ListView) rootView.findViewById(R.id.listV_main);
-            listView.setAdapter(adapter);
+            try {
+                listView = (ListView) rootView.findViewById(R.id.listV_main);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return rootView;
+            }
 
+            listView.setAdapter(adapter);
             return rootView;
         }
 

@@ -3,9 +3,11 @@
 
     <string name="app_name">Mng.It</string>
     <string name="activity_createTask">Create Task</string>
+    <string name="activity_showTask">Update Task</string>
     <string name="action_add_task">Add Task</string>
-    <string name="button_task_done">Done</string>
+    <string name="action_remove_task">Remove Task</string>
     <string name="edit_message">Enter a description</string>
     <string name="button_create">Create</string>
+    <string name="button_edit">Update</string>
 
 </resources>
