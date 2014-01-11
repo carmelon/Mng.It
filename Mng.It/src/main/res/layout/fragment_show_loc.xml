@@ -14,7 +14,8 @@
         android:singleLine="true"
         android:imeActionLabel="@string/abc_action_mode_done"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:inputType="text" />
 
     <fragment
         android:tag="mapFragment"

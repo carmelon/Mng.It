@@ -9,6 +9,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
+import android.text.Editable;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -36,10 +37,13 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Created by Ori on 1/10/14.
+ * Activity for the Task creation.
  */
 public class CreateTaskActivity extends ActionBarActivity {
 
+    /**
+     * Initialize the fragments.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -53,12 +57,18 @@ public class CreateTaskActivity extends ActionBarActivity {
         }
     }
 
+    /**
+     * Initialize Google Analytics.
+     */
     @Override
     protected void onStart() {
         super.onStart();
         EasyTracker.getInstance(this).activityStart(this);
     }
 
+    /**
+     * Terminate Google Analytics.
+     */
     @Override
     protected void onStop() {
         super.onStop();
@@ -66,48 +76,68 @@ public class CreateTaskActivity extends ActionBarActivity {
     }
 
     /**
-     * A fragment containing the task creation.
+     * A fragment containing the task creation functionality.
      */
     public static class CreateTaskFragment extends Fragment {
 
         private EditText taskDesc;
         private Button createTaskButton;
 
+        /**
+         * Initialize the EditText and the Button functionalities.
+         */
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
-
+            /* Inflate the fragment's layout */
             View rootView = inflater.inflate(R.layout.fragment_create, container, false);
-
-            try {
-                taskDesc = (EditText) rootView.findViewById(R.id.edit_message);
-                createTaskButton = (Button) rootView.findViewById(R.id.createButton);
-            } catch (Exception e) {
-                e.printStackTrace();
-                return rootView;
+            if(rootView == null) {
+                return null;
             }
+
+            /* Initialize the UI Objects */
+            taskDesc = (EditText) rootView.findViewById(R.id.edit_message);
+            createTaskButton = (Button) rootView.findViewById(R.id.createButton);
             createTaskButton.setOnClickListener(new View.OnClickListener() {
+                /**
+                 * Add a Task.
+                 */
                 @Override
                 public void onClick(View v) {
+                    Editable tempText;
+                    String description, location;
+
+                    /* Get the Text information */
                     EditText taskLoc = (EditText) getActivity().findViewById(R.id.edit_location);
-
-                    String description;
-                    try {
-                        description = taskDesc.getText().toString();
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        description = "";
-                    }
-
-                    String location;
-                    try {
-                        location = taskLoc.getText().toString();
-                    } catch (Exception e) {
-                        e.printStackTrace();
+                    if(taskLoc == null) {
                         location = "";
                     }
+                    else {
+                        tempText = taskLoc.getText();
+                        if(tempText == null) {
+                            location = "";
+                        }
+                        else {
+                            location = tempText.toString();
+                        }
+                    }
+                    if(taskDesc == null) {
+                        description = "";
+                    }
+                    else {
+                        tempText = taskDesc.getText();
+                        if(tempText == null) {
+                            description = "";
+                        }
+                        else {
+                            description = tempText.toString();
+                        }
+                    }
 
+                    /* Add the task to the database */
                     TaskListDB.getInstance(getActivity()).addTask(new TaskDetails(description, location));
+
+                    /* Terminate the activity */
                     getActivity().finish();
                 }
             });
@@ -117,7 +147,7 @@ public class CreateTaskActivity extends ActionBarActivity {
     }
 
     /**
-     * fragment to handle all the location activities.
+     * A fragment to handle the location activities and information.
      */
     public static class LocationFragment extends Fragment implements
             GooglePlayServicesClient.ConnectionCallbacks,
@@ -128,60 +158,74 @@ public class CreateTaskActivity extends ActionBarActivity {
         private Marker marker;
         private EditText taskLoc;
         private final static int
-                CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
+                CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000; //arbitrary error code
 
+        /**
+         * Initialize the location text box, map and the location process.
+         */
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-
+            /* Inflate the fragment's layout */
             View rootView = inflater.inflate(R.layout.fragment_location, container, false);
+            if(rootView == null) {
+                return null;
+            }
+
+            /* Initialize the location client */
             locationClient = new LocationClient(getActivity(), this, this);
 
-            try {
-                taskLoc = (EditText) rootView.findViewById(R.id.edit_location);
-            } catch (Exception e) {
-                e.printStackTrace();
-                return rootView;
-            }
+            /* Initialize the UI objects */
+            taskLoc = (EditText) rootView.findViewById(R.id.edit_location);
             taskLoc.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+                /**
+                 * Verify location and update the map after its entered in the text box.
+                 */
                 @Override
                 public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                    Editable tempText;
+
                     if (actionId == EditorInfo.IME_ACTION_DONE) {
-                        try {
-                            lookUp(taskLoc.getText().toString());
-                        } catch (Exception e) {
-                            e.printStackTrace();
+                        tempText = taskLoc.getText();
+                        if(tempText != null) {
+                            lookUp(tempText.toString());
                         }
                     }
                     return false;
                 }
             });
 
+            /* Initialize Google Map */
             SupportMapFragment supportMapFragment =
                     (SupportMapFragment)getActivity().getSupportFragmentManager().findFragmentByTag("mapFragment");
-
             googleMap = supportMapFragment.getMap();
             if (googleMap != null) {
-                //map available
-                googleMap.setMyLocationEnabled(true);
+                googleMap.setMyLocationEnabled(true); //map available
             }
 
             return rootView;
         }
 
+        /**
+         * Connect the LocationClient.
+         */
         @Override
         public void onStart() {
             super.onStart();
-            // Connect the client.
             locationClient.connect();
         }
 
+        /**
+         * Terminate the LocationClient.
+         */
         @Override
         public void onStop() {
-            // Disconnecting the client invalidates it.
             locationClient.disconnect();
             super.onStop();
         }
 
+        /**
+         * Perform the connection logic in an AsyncTask for performance.
+         */
         @Override
         public void onConnected(Bundle bundle) {
             new GeocoderLocationTask().execute();
@@ -191,16 +235,21 @@ public class CreateTaskActivity extends ActionBarActivity {
         public void onDisconnected() {
         }
 
+        /**
+         * Start an Activity that tries to resolve the error.
+         */
         @Override
         public void onConnectionFailed(ConnectionResult connectionResult) {
             try {
-                // Start an Activity that tries to resolve the error
                 connectionResult.startResolutionForResult(getActivity(), CONNECTION_FAILURE_RESOLUTION_REQUEST);
             } catch (IntentSender.SendIntentException e) {
                 e.printStackTrace();
             }
         }
 
+        /**
+         * Error resolving callback.
+         */
         @Override
         public void onActivityResult(int requestCode, int resultCode, Intent data) {
             switch (requestCode){
@@ -216,14 +265,14 @@ public class CreateTaskActivity extends ActionBarActivity {
         }
 
         /**
-         * Lookup the address in input and update map if possible
+         * Lookup the address with the Geocoder and update map if possible
          */
         private void lookUp(String addressString) {
             new LookUpTask().execute(addressString);
         }
 
         /**
-         * Display a marker on the map and reposition the camera according to location
+         * Display a marker on the map and reposition the camera according to location.
          */
         private void updateMap(LatLng latLng){
             if (googleMap == null){
@@ -231,12 +280,13 @@ public class CreateTaskActivity extends ActionBarActivity {
             }
 
             if (marker != null){
-                marker.remove();
+                marker.remove(); // remove old marker
             }
 
+            /* Set Marker */
             marker = googleMap.addMarker(new MarkerOptions().position(latLng));
 
-            //reposition camera
+            /* Set Camera */
             CameraPosition newPosition = new CameraPosition.Builder()
                     .target(latLng)
                     .zoom(15)
@@ -244,13 +294,14 @@ public class CreateTaskActivity extends ActionBarActivity {
             googleMap.animateCamera(CameraUpdateFactory.newCameraPosition(newPosition));
         }
 
+        /**
+         * AsyncTask to run the Geocoder in the background to verify the address string.
+         */
         private class LookUpTask extends AsyncTask<String, Void, LatLng>
         {
             @Override
             protected LatLng doInBackground(String... params) {
-                Geocoder geoCoder;
-
-                geoCoder = new Geocoder(getActivity(), new Locale("iw_IL"));
+                Geocoder geoCoder = new Geocoder(getActivity(), new Locale("iw_IL"));
                 try {
                     List<Address> addresses = geoCoder.getFromLocationName(params[0], 1);
                     if (addresses.size() >= 1) {
@@ -264,6 +315,9 @@ public class CreateTaskActivity extends ActionBarActivity {
                 return null;
             }
 
+            /**
+             * If Geocoder was successful, update the map accordingly.
+             */
             @Override
             protected void onPostExecute(LatLng latLng) {
                 if(latLng != null)
@@ -277,15 +331,21 @@ public class CreateTaskActivity extends ActionBarActivity {
             }
         }
 
+        /**
+         * AsyncTask to handle the LocationClient connection flow.
+         */
         private class GeocoderLocationTask extends AsyncTask<Void, Void, Address>
         {
+            /**
+             * Poll for location and decode it to address.
+             */
             @Override
             protected Address doInBackground(Void... params) {
                 Geocoder geoCoder;
                 Location location = null;
                 int retries = 10;
 
-                // Display the connection status
+                /* Poll for a good location return */
                 while(retries > 0 && location == null)
                 {
                     try {
@@ -300,6 +360,7 @@ public class CreateTaskActivity extends ActionBarActivity {
                     return null;
                 }
 
+                /* Decode location to an address */
                 geoCoder = new Geocoder(getActivity(), new Locale("iw_IL"));
                 try {
                     List<Address> addresses =
@@ -313,6 +374,9 @@ public class CreateTaskActivity extends ActionBarActivity {
                 return null;
             }
 
+            /**
+             * If location decoding was successful, set the text box and update the map.
+             */
             @Override
             protected void onPostExecute(Address address) {
                 if(address != null)

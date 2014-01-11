@@ -5,13 +5,17 @@ import android.content.Context;
 import java.util.ArrayList;
 
 /**
- * Created by Ori on 1/10/14.
+ * Database abstraction layer in the Model.
+ * Using an ArrayList as a faster access medium to the data.
  */
 public class TaskListDB {
     private static TaskListDB instance = null;
     private ArrayList<TaskDetails> taskArray;
     private DatabaseHandler db;
 
+    /**
+     * Singleton initialization - only one interface to the database.
+     */
     private TaskListDB(Context context) {
         db = new DatabaseHandler(context);
         taskArray = db.getAllTasks();

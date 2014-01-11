@@ -17,6 +17,7 @@
         android:layout_margin="@dimen/button_margin"/>
 
     <ImageButton android:id="@+id/editButton"
+        android:contentDescription="@string/button_edit"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:src="@drawable/ic_action_edit"

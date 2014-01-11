@@ -9,30 +9,29 @@ import android.database.sqlite.SQLiteOpenHelper;
 import java.util.ArrayList;
 
 /**
- * Created by Ori on 1/10/14.
+ * Wrapper class for the SQLite database functionality.
  */
 public class DatabaseHandler extends SQLiteOpenHelper {
-    // All Static variables
-    // Database Version
+    // DB parameters:
     private static final int DATABASE_VERSION = 1;
-
-    // Database Name
     private static final String DATABASE_NAME = "TasksManager";
-
-    // Contacts table name
     private static final String TABLE_TASKS = "Tasks";
-
-    // Contacts Table Columns names
+    // Tasks contents:
     private static final String KEY_ID = "id";
     private static final String KEY_DESC = "description";
     private static final String KEY_LOC = "location";
     private static final String KEY_DONE = "done";
 
+    /**
+     * Initialize the database.
+     */
     public DatabaseHandler(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
-    // Creating Tables
+    /**
+     * Create Tasks Table.
+     */
     @Override
     public void onCreate(SQLiteDatabase db) {
         String CREATE_CONTACTS_TABLE = "CREATE TABLE " + TABLE_TASKS + "("
@@ -41,7 +40,9 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         db.execSQL(CREATE_CONTACTS_TABLE);
     }
 
-    // Upgrading database
+    /**
+     * Refresh DB on version modification.
+     */
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         // Drop older table if existed
@@ -51,84 +52,105 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    // Adding new task
+    /**
+     * Create new Task.
+     * Returns its id in the database, or -1 in case of failure.
+     */
     long addTask(TaskDetails task) {
         long resultId;
+
+        /* Get the database */
         SQLiteDatabase db = this.getWritableDatabase();
-
-        ContentValues values = new ContentValues();
-        values.put(KEY_DESC, task.getDescription()); // Task Description
-        values.put(KEY_LOC, task.getLocation()); // Task Location
-        values.put(KEY_DONE, String.valueOf(task.getDone())); // Task Completion
-
-        // Inserting Row
-        try {
-            resultId = db.insert(TABLE_TASKS, null, values);
-        } catch (Exception e) {
-            e.printStackTrace();
-            resultId = -1;
-        }
-        db.close(); // Closing database connection
-
-        return resultId;
-    }
-
-    // Getting All Tasks
-    public ArrayList<TaskDetails> getAllTasks() {
-        ArrayList<TaskDetails> tasksList = new ArrayList<TaskDetails>();
-        // Select All Query
-        String selectQuery = "SELECT  * FROM " + TABLE_TASKS;
-
-        SQLiteDatabase db = this.getWritableDatabase();
-        Cursor cursor;
-        try {
-            cursor = db.rawQuery(selectQuery, null);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return tasksList;
+        if(db == null) {
+            return -1;
         }
 
-        // looping through all rows and adding to list
-        if (cursor.moveToFirst()) {
-            do {
-                TaskDetails task = new TaskDetails(cursor.getString(1), cursor.getString(2));
-                task.setId(Integer.parseInt(cursor.getString(0)));
-                task.setDone(Boolean.valueOf(cursor.getString(3)));
-
-                // Adding task to list
-                tasksList.add(task);
-            } while (cursor.moveToNext());
-        }
-
-        // return task list
-        return tasksList;
-    }
-
-    // Update a task
-    public void updateTask(TaskDetails task) {
-        SQLiteDatabase db = this.getWritableDatabase();
-
+        /* Format the task's parameters */
         ContentValues values = new ContentValues();
         values.put(KEY_DESC, task.getDescription());
         values.put(KEY_LOC, task.getLocation());
         values.put(KEY_DONE, String.valueOf(task.getDone()));
 
-        try {
-            db.update(TABLE_TASKS, values, KEY_ID + " = ?", new String[]{String.valueOf(task.getId())});
-            db.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        /* Insert the data */
+        resultId = db.insert(TABLE_TASKS, null, values);
+
+        /* Close the connection */
+        db.close();
+
+        return resultId;
     }
 
-    // Deleting single task
-    public void deleteTask(long id) {
+    /**
+     * Get the entire database table as an ArrayList.
+     * Return the full list or null if failed.
+     */
+    public ArrayList<TaskDetails> getAllTasks() {
+        ArrayList<TaskDetails> tasksList = new ArrayList<TaskDetails>();
+        String selectQuery = "SELECT  * FROM " + TABLE_TASKS; //query for the entire table
+
+        /* Get the database */
         SQLiteDatabase db = this.getWritableDatabase();
-        try {
-            db.delete(TABLE_TASKS, KEY_ID + " = ?", new String[] { String.valueOf(id) });
-            db.close();
-        } catch (Exception e) {
-            e.printStackTrace();
+        if(db == null) {
+            return null;
         }
+
+        /* Create a Cursor to cycle through the table */
+        Cursor cursor = db.rawQuery(selectQuery, null);
+        if(cursor == null) {
+            return null;
+        }
+
+        if (cursor.moveToFirst()) {
+            do {
+                /* Get task information from each row and add to the list */
+                TaskDetails task = new TaskDetails(cursor.getString(1), cursor.getString(2));
+                task.setId(Integer.parseInt(cursor.getString(0)));
+                task.setDone(Boolean.valueOf(cursor.getString(3)));
+
+                tasksList.add(task);
+            } while (cursor.moveToNext());
+        }
+
+        return tasksList;
+    }
+
+    /**
+     * Update an existing task.
+     */
+    public void updateTask(TaskDetails task) {
+        /* Get the database */
+        SQLiteDatabase db = this.getWritableDatabase();
+        if(db == null) {
+            return;
+        }
+
+        /* Format the task's parameters */
+        ContentValues values = new ContentValues();
+        values.put(KEY_DESC, task.getDescription());
+        values.put(KEY_LOC, task.getLocation());
+        values.put(KEY_DONE, String.valueOf(task.getDone()));
+
+        /* Update the database */
+        db.update(TABLE_TASKS, values, KEY_ID + " = ?", new String[]{String.valueOf(task.getId())});
+
+        /* Close the connection */
+        db.close();
+    }
+
+    /**
+     * Delete an existing task from the table.
+     */
+    public void deleteTask(long id) {
+        /* Get the database */
+        SQLiteDatabase db = this.getWritableDatabase();
+        if(db == null) {
+            return;
+        }
+
+        /* Delete the task at the given id */
+        db.delete(TABLE_TASKS, KEY_ID + " = ?", new String[] { String.valueOf(id) });
+
+        /* Close the connection */
+        db.close();
     }
 }

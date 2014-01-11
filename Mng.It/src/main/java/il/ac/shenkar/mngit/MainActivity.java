@@ -13,6 +13,12 @@ import android.widget.ListView;
 
 import com.google.analytics.tracking.android.EasyTracker;
 
+/**
+ * - Entry point to the application.
+ * - Contains a list of tracked tasks.
+ * - Can enter the CreateTaskActivity from the Action Bar.
+ * - Can enter the ShowTaskActivity from the edit button of a specific task in the list.
+ */
 public class MainActivity extends ActionBarActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,16 +32,23 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
+    /**
+     * Initialize the Action Bar action.
+     */
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.main, menu);
         return true;
     }
 
+    /**
+     * Callback when selecting an action in the Action Bar.
+     */
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch(item.getItemId())
         {
+            /* Call CreateTaskActivity */
             case R.id.action_add_task:
                 Intent intent = new Intent(getApplicationContext(), CreateTaskActivity.class);
                 startActivity(intent);
@@ -45,12 +58,18 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
+    /**
+     * Initialize Google Analytics.
+     */
     @Override
     protected void onStart() {
         super.onStart();
         EasyTracker.getInstance(this).activityStart(this);
     }
 
+    /**
+     * Terminate Google Analytics.
+     */
     @Override
     protected void onStop() {
         super.onStop();
@@ -58,30 +77,37 @@ public class MainActivity extends ActionBarActivity {
     }
 
     /**
-     * A fragment containing the task list.
+     * A UI fragment containing the task list.
      */
     public static class TaskListFragment extends Fragment {
         private ListView listView;
         private TaskListBaseAdapter adapter;
 
+        /**
+         * Initializes the ListView object and binds it to an adapter.
+         */
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                 Bundle savedInstanceState) {
+            /* Inflate the fragment's layout */
             View rootView = inflater.inflate(R.layout.fragment_main, container, false);
-
-            adapter = new TaskListBaseAdapter(getActivity());
-
-            try {
-                listView = (ListView) rootView.findViewById(R.id.listV_main);
-            } catch (Exception e) {
-                e.printStackTrace();
-                return rootView;
+            if(rootView == null) {
+                return null;
             }
 
+            /* Initialize Components */
+            adapter = new TaskListBaseAdapter(getActivity());
+            listView = (ListView) rootView.findViewById(R.id.listV_main);
+
+            /* Bind the Adapter to the List */
             listView.setAdapter(adapter);
+
             return rootView;
         }
 
+        /**
+         * Ask Android to always refresh the list when returning. (countering any possible modifications)
+         */
         @Override
         public void onResume() {
             super.onResume();

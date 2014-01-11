@@ -1,13 +1,13 @@
 package il.ac.shenkar.mngit;
 
 /**
- * Created by Ori on 1/10/14.
+ * POJO of a Task for the Model layer.
  */
 public class TaskDetails {
-    private long id;
+    private long id; //received by the DB when inserted
     private String description;
     private String location;
-    private Boolean done;
+    private Boolean done; //task completed
 
     public TaskDetails(String description, String location) {
         this.description = description;
