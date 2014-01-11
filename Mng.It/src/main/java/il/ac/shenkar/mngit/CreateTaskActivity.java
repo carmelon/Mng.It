@@ -184,13 +184,7 @@ public class CreateTaskActivity extends ActionBarActivity {
 
         @Override
         public void onConnected(Bundle bundle) {
-            // Display the connection status
-            Location location = locationClient.getLastLocation();
-            if (location == null){
-                return;
-            }
-
-            new GeocoderLocationTask().execute(location);
+            new GeocoderLocationTask().execute();
         }
 
         @Override
@@ -283,15 +277,30 @@ public class CreateTaskActivity extends ActionBarActivity {
             }
         }
 
-        private class GeocoderLocationTask extends AsyncTask<Location, Void, Address>
+        private class GeocoderLocationTask extends AsyncTask<Void, Void, Address>
         {
             @Override
-            protected Address doInBackground(Location... params) {
+            protected Address doInBackground(Void... params) {
                 Geocoder geoCoder;
-                Location location;
+                Location location = null;
+                int retries = 10;
+
+                // Display the connection status
+                while(retries > 0 && location == null)
+                {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                    location = locationClient.getLastLocation();
+                    retries--;
+                }
+                if (location == null){
+                    return null;
+                }
 
                 geoCoder = new Geocoder(getActivity(), new Locale("iw_IL"));
-                location = params[0];
                 try {
                     List<Address> addresses =
                             geoCoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
