@@ -1,5 +1,6 @@
 package il.ac.shenkar.mngit;
 
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.view.LayoutInflater;
@@ -62,31 +63,41 @@ public class TaskListBaseAdapter extends BaseAdapter {
             holder = new ViewHolder();
             holder.description = (TextView) convertView.findViewById(R.id.description);
             holder.doneButton = (CheckBox) convertView.findViewById(R.id.doneButton);
-            holder.doneButton.setOnClickListener(new View.OnClickListener() {
-                /**
-                 * Update DB and the List when a checkbox is pressed.
-                 */
-                @Override
-                public void onClick(View v) {
-                    int position = (Integer)v.getTag(); //task position saved while initializing
-                    TaskDetails tempTask = db.getTask(position);
-                    tempTask.setDone(((CheckBox)v).isChecked());
-                    db.updateTask(position, tempTask);
-                    notifyDataSetChanged(); //inform the list it was changed
-                }
-            });
+            if(holder.doneButton != null) {
+                holder.doneButton.setOnClickListener(new View.OnClickListener() {
+                    /**
+                     * Update DB and the List when a checkbox is pressed.
+                     */
+                    @Override
+                    public void onClick(View v) {
+                        int position = (Integer)v.getTag(); //task position saved while initializing
+                        TaskDetails tempTask = db.getTask(position);
+                        if(tempTask != null) {
+                            tempTask.setDone(((CheckBox)v).isChecked());
+                            db.updateTask(position, tempTask);
+                            notifyDataSetChanged(); //inform the list it was changed
+                        }
+                    }
+                });
+            }
             holder.editButton = (ImageButton) convertView.findViewById(R.id.editButton);
-            holder.editButton.setOnClickListener(new View.OnClickListener() {
-                /**
-                 * Start an edit task activity when the edit button is pressed.
-                 */
-                @Override
-                public void onClick(View v) {
-                    Intent intent = new Intent(context, ShowTaskActivity.class);
-                    intent.putExtra("POSITION", (Integer)v.getTag()); //pass the current position through the intent
-                    context.startActivity(intent);
-                }
-            });
+            if(holder.editButton != null) {
+                holder.editButton.setOnClickListener(new View.OnClickListener() {
+                    /**
+                     * Start an edit task activity when the edit button is pressed.
+                     */
+                    @Override
+                    public void onClick(View v) {
+                        Intent intent = new Intent(context, ShowTaskActivity.class);
+                        intent.putExtra("POSITION", (Integer)v.getTag()); //pass the current position through the intent
+                        try {
+                            context.startActivity(intent);
+                        } catch (ActivityNotFoundException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+            }
 
             convertView.setTag(holder); //save the holder instead of wasting the object
         } else {
@@ -95,10 +106,18 @@ public class TaskListBaseAdapter extends BaseAdapter {
         if(holder != null) {
             /* Set the current state of object, save the position for later use in the listeners */
             TaskDetails tempTask = db.getTask(position);
-            holder.description.setText(tempTask.getDescription());
-            holder.editButton.setTag(position);
-            holder.doneButton.setChecked(tempTask.getDone());
-            holder.doneButton.setTag(position);
+            if(tempTask != null) {
+                if(holder.description != null) {
+                    holder.description.setText(tempTask.getDescription());
+                }
+                if(holder.editButton != null) {
+                    holder.editButton.setTag(position);
+                }
+                if(holder.doneButton != null) {
+                    holder.doneButton.setChecked(tempTask.getDone());
+                    holder.doneButton.setTag(position);
+                }
+            }
         }
 
         return convertView;

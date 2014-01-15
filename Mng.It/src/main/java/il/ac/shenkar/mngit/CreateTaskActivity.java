@@ -34,7 +34,6 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Activity for the Task creation.
@@ -89,6 +88,11 @@ public class CreateTaskActivity extends ActionBarActivity {
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
+            /* Verify Parameters */
+            if(container == null || inflater == null) {
+                return null;
+            }
+
             /* Inflate the fragment's layout */
             View rootView = inflater.inflate(R.layout.fragment_create, container, false);
             if(rootView == null) {
@@ -98,49 +102,51 @@ public class CreateTaskActivity extends ActionBarActivity {
             /* Initialize the UI Objects */
             taskDesc = (EditText) rootView.findViewById(R.id.edit_message);
             createTaskButton = (Button) rootView.findViewById(R.id.createButton);
-            createTaskButton.setOnClickListener(new View.OnClickListener() {
-                /**
-                 * Add a Task.
-                 */
-                @Override
-                public void onClick(View v) {
-                    Editable tempText;
-                    String description, location;
+            if(createTaskButton != null) {
+                createTaskButton.setOnClickListener(new View.OnClickListener() {
+                    /**
+                     * Add a Task.
+                     */
+                    @Override
+                    public void onClick(View v) {
+                        Editable tempText;
+                        String description, location;
 
-                    /* Get the Text information */
-                    EditText taskLoc = (EditText) getActivity().findViewById(R.id.edit_location);
-                    if(taskLoc == null) {
-                        location = "";
-                    }
-                    else {
-                        tempText = taskLoc.getText();
-                        if(tempText == null) {
+                        /* Get the Text information */
+                        EditText taskLoc = (EditText) getActivity().findViewById(R.id.edit_location);
+                        if(taskLoc == null) {
                             location = "";
                         }
                         else {
-                            location = tempText.toString();
+                            tempText = taskLoc.getText();
+                            if(tempText == null) {
+                                location = "";
+                            }
+                            else {
+                                location = tempText.toString();
+                            }
                         }
-                    }
-                    if(taskDesc == null) {
-                        description = "";
-                    }
-                    else {
-                        tempText = taskDesc.getText();
-                        if(tempText == null) {
+                        if(taskDesc == null) {
                             description = "";
                         }
                         else {
-                            description = tempText.toString();
+                            tempText = taskDesc.getText();
+                            if(tempText == null) {
+                                description = "";
+                            }
+                            else {
+                                description = tempText.toString();
+                            }
                         }
+
+                        /* Add the task to the database */
+                        TaskListDB.getInstance(getActivity()).addTask(new TaskDetails(description, location));
+
+                        /* Terminate the activity */
+                        getActivity().finish();
                     }
-
-                    /* Add the task to the database */
-                    TaskListDB.getInstance(getActivity()).addTask(new TaskDetails(description, location));
-
-                    /* Terminate the activity */
-                    getActivity().finish();
-                }
-            });
+                });
+            }
 
             return rootView;
         }
@@ -165,6 +171,11 @@ public class CreateTaskActivity extends ActionBarActivity {
          */
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+            /* Verify Parameters */
+            if(container == null || inflater == null) {
+                return null;
+            }
+
             /* Inflate the fragment's layout */
             View rootView = inflater.inflate(R.layout.fragment_location, container, false);
             if(rootView == null) {
@@ -176,23 +187,25 @@ public class CreateTaskActivity extends ActionBarActivity {
 
             /* Initialize the UI objects */
             taskLoc = (EditText) rootView.findViewById(R.id.edit_location);
-            taskLoc.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-                /**
-                 * Verify location and update the map after its entered in the text box.
-                 */
-                @Override
-                public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                    Editable tempText;
+            if(taskLoc != null) {
+                taskLoc.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+                    /**
+                     * Verify location and update the map after its entered in the text box.
+                     */
+                    @Override
+                    public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                        Editable tempText;
 
-                    if (actionId == EditorInfo.IME_ACTION_DONE) {
-                        tempText = taskLoc.getText();
-                        if(tempText != null) {
-                            lookUp(tempText.toString());
+                        if (actionId == EditorInfo.IME_ACTION_DONE) {
+                            tempText = taskLoc.getText();
+                            if(tempText != null) {
+                                lookUp(tempText.toString());
+                            }
                         }
+                        return false;
                     }
-                    return false;
-                }
-            });
+                });
+            }
 
             /* Initialize Google Map */
             SupportMapFragment supportMapFragment =
@@ -228,7 +241,11 @@ public class CreateTaskActivity extends ActionBarActivity {
          */
         @Override
         public void onConnected(Bundle bundle) {
-            new GeocoderLocationTask().execute();
+            try {
+                new GeocoderLocationTask().execute();
+            } catch (IllegalStateException e) {
+                e.printStackTrace();
+            }
         }
 
         @Override
@@ -240,10 +257,12 @@ public class CreateTaskActivity extends ActionBarActivity {
          */
         @Override
         public void onConnectionFailed(ConnectionResult connectionResult) {
-            try {
-                connectionResult.startResolutionForResult(getActivity(), CONNECTION_FAILURE_RESOLUTION_REQUEST);
-            } catch (IntentSender.SendIntentException e) {
-                e.printStackTrace();
+            if(connectionResult != null) {
+                try {
+                    connectionResult.startResolutionForResult(getActivity(), CONNECTION_FAILURE_RESOLUTION_REQUEST);
+                } catch (IntentSender.SendIntentException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
@@ -268,19 +287,30 @@ public class CreateTaskActivity extends ActionBarActivity {
          * Lookup the address with the Geocoder and update map if possible
          */
         private void lookUp(String addressString) {
-            new LookUpTask().execute(addressString);
+            /* Verify Parameters */
+            if(addressString == null) {
+                return;
+            }
+
+            try {
+                new LookUpTask().execute(addressString);
+            } catch (IllegalStateException e) {
+                e.printStackTrace();
+            }
         }
 
         /**
          * Display a marker on the map and reposition the camera according to location.
          */
         private void updateMap(LatLng latLng){
-            if (googleMap == null){
-                return; //no play services
+            /* Verify Parameters */
+            if (googleMap == null || latLng == null){
+                return;
             }
 
+            /* Remove Old Marker */
             if (marker != null){
-                marker.remove(); // remove old marker
+                marker.remove();
             }
 
             /* Set Marker */
@@ -301,14 +331,26 @@ public class CreateTaskActivity extends ActionBarActivity {
         {
             @Override
             protected LatLng doInBackground(String... params) {
-                Geocoder geoCoder = new Geocoder(getActivity(), new Locale("iw_IL"));
+                /* Verify Parameters */
+                if(params == null || params[0] == null) {
+                    return null;
+                }
+
+                /* Get GeoCode Address by the given string */
+                Geocoder geoCoder = new Geocoder(getActivity());
                 try {
                     List<Address> addresses = geoCoder.getFromLocationName(params[0], 1);
-                    if (addresses.size() >= 1) {
+                    if (addresses != null && addresses.size() >= 1) {
                         Address address = addresses.get(0);
                         return new LatLng(address.getLatitude(), address.getLongitude());
                     }
                 } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (IllegalArgumentException e) {
+                    e.printStackTrace();
+                } catch (IllegalStateException e) {
+                    e.printStackTrace();
+                } catch (IndexOutOfBoundsException e) {
                     e.printStackTrace();
                 }
 
@@ -320,12 +362,11 @@ public class CreateTaskActivity extends ActionBarActivity {
              */
             @Override
             protected void onPostExecute(LatLng latLng) {
-                if(latLng != null)
-                {
+                /* Verify Parameters */
+                if(latLng != null) {
                     updateMap(latLng);
                 }
-                else
-                {
+                else {
                     Toast.makeText(getActivity(), "Location Failed!", Toast.LENGTH_SHORT).show();
                 }
             }
@@ -341,13 +382,11 @@ public class CreateTaskActivity extends ActionBarActivity {
              */
             @Override
             protected Address doInBackground(Void... params) {
-                Geocoder geoCoder;
                 Location location = null;
-                int retries = 10;
+                int retries = 20;
 
                 /* Poll for a good location return */
-                while(retries > 0 && location == null)
-                {
+                while(retries > 0 && location == null) {
                     try {
                         Thread.sleep(100);
                     } catch (InterruptedException e) {
@@ -361,14 +400,18 @@ public class CreateTaskActivity extends ActionBarActivity {
                 }
 
                 /* Decode location to an address */
-                geoCoder = new Geocoder(getActivity(), new Locale("iw_IL"));
+                Geocoder geoCoder = new Geocoder(getActivity());
                 try {
                     List<Address> addresses =
                             geoCoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
-                    if (addresses.size()>0){
+                    if (addresses != null && addresses.size() > 0){
                         return addresses.get(0);
                     }
                 } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (IllegalArgumentException e) {
+                    e.printStackTrace();
+                } catch (IndexOutOfBoundsException e) {
                     e.printStackTrace();
                 }
                 return null;
@@ -379,13 +422,18 @@ public class CreateTaskActivity extends ActionBarActivity {
              */
             @Override
             protected void onPostExecute(Address address) {
-                if(address != null)
-                {
-                    taskLoc.setText(address.getAddressLine(0) + " " + address.getAddressLine(1));
-                    lookUp(address.getAddressLine(0) + " " + address.getAddressLine(1));
+                /* Verify Parameters */
+                if(address != null) {
+                    try {
+                        if(taskLoc != null) {
+                            taskLoc.setText(address.getAddressLine(0) + " " + address.getAddressLine(1));
+                            lookUp(address.getAddressLine(0) + " " + address.getAddressLine(1));
+                        }
+                    } catch (IllegalArgumentException e) {
+                        e.printStackTrace();
+                        }
                 }
-                else
-                {
+                else {
                     Toast.makeText(getActivity(), "Location Failed!", Toast.LENGTH_SHORT).show();
                 }
             }

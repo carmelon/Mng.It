@@ -30,7 +30,6 @@ import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Activity to show the task parameters and edit them.
@@ -73,8 +72,7 @@ public class ShowTaskActivity extends ActionBarActivity {
             case R.id.action_remove_task:
                 /* Get Position from Activity Intent */
                 int position = getIntent().getIntExtra("POSITION", -1);
-                if(position != -1)
-                {
+                if(position != -1) {
                     /* Remove Task from the databse */
                     TaskListDB.getInstance(this).removeTask(position);
                 }
@@ -120,10 +118,14 @@ public class ShowTaskActivity extends ActionBarActivity {
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
+            /* Verify Parameters */
+            if(container == null || inflater == null) {
+                return null;
+            }
+
             /* Inflate the fragment's layout */
             View rootView = inflater.inflate(R.layout.fragment_edit, container, false);
-            if(rootView == null)
-            {
+            if(rootView == null) {
                 return null;
             }
 
@@ -132,61 +134,65 @@ public class ShowTaskActivity extends ActionBarActivity {
 
             /* Initialize the UI Objecsts */
             taskDesc = (EditText) rootView.findViewById(R.id.show_edit_message);
-            if(position != -1 && taskDesc != null)
-            {
+            if(position != -1 && taskDesc != null) {
                 TaskDetails currentTask = TaskListDB.getInstance(getActivity()).getTask(position);
-                taskDesc.setText(currentTask.getDescription());
+                if(currentTask != null) {
+                    taskDesc.setText(currentTask.getDescription());
+                }
             }
             editTaskButton = (Button) rootView.findViewById(R.id.show_editButton);
-            editTaskButton.setOnClickListener(new View.OnClickListener() {
-                /**
-                 * Update a task.
-                 */
-                @Override
-                public void onClick(View v) {
-                    Editable tempText;
-                    String description, location;
+            if(editTaskButton != null) {
+                editTaskButton.setOnClickListener(new View.OnClickListener() {
+                    /**
+                     * Update a task.
+                     */
+                    @Override
+                    public void onClick(View v) {
+                        Editable tempText;
+                        String description, location;
 
-                    /* Get the Text information */
-                    EditText taskLoc = (EditText) getActivity().findViewById(R.id.show_edit_location);
-                    if(taskLoc == null) {
-                        location = "";
-                    }
-                    else {
-                        tempText = taskLoc.getText();
-                        if(tempText == null) {
+                        /* Get the Text information */
+                        EditText taskLoc = (EditText) getActivity().findViewById(R.id.show_edit_location);
+                        if(taskLoc == null) {
                             location = "";
                         }
                         else {
-                            location = tempText.toString();
+                            tempText = taskLoc.getText();
+                            if(tempText == null) {
+                                location = "";
+                            }
+                            else {
+                                location = tempText.toString();
+                            }
                         }
-                    }
-                    if(taskDesc == null) {
-                        description = "";
-                    }
-                    else {
-                        tempText = taskDesc.getText();
-                        if(tempText == null) {
+                        if(taskDesc == null) {
                             description = "";
                         }
                         else {
-                            description = tempText.toString();
+                            tempText = taskDesc.getText();
+                            if(tempText == null) {
+                                description = "";
+                            }
+                            else {
+                                description = tempText.toString();
+                            }
                         }
-                    }
 
-                    /* Update the Task */
-                    if(position != -1)
-                    {
-                        TaskDetails currentTask = TaskListDB.getInstance(getActivity()).getTask(position);
-                        currentTask.setDescription(description);
-                        currentTask.setLocation(location);
-                        TaskListDB.getInstance(getActivity()).updateTask(position, currentTask);
-                    }
+                        /* Update the Task */
+                        if(position != -1) {
+                            TaskDetails currentTask = TaskListDB.getInstance(getActivity()).getTask(position);
+                            if(currentTask != null) {
+                                currentTask.setDescription(description);
+                                currentTask.setLocation(location);
+                                TaskListDB.getInstance(getActivity()).updateTask(position, currentTask);
+                            }
+                        }
 
-                    /* Terminate the Activity */
-                    getActivity().finish();
-                }
-            });
+                        /* Terminate the Activity */
+                        getActivity().finish();
+                    }
+                });
+            }
 
             return rootView;
         }
@@ -206,6 +212,11 @@ public class ShowTaskActivity extends ActionBarActivity {
          */
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+            /* Verify Parameters */
+            if(container == null || inflater == null) {
+                return null;
+            }
+
             /* Inflate the fragment's layout */
             View rootView = inflater.inflate(R.layout.fragment_show_loc, container, false);
             if(rootView == null) {
@@ -214,23 +225,25 @@ public class ShowTaskActivity extends ActionBarActivity {
 
             /* Initialize the UI Objects */
             taskLoc = (EditText) rootView.findViewById(R.id.show_edit_location);
-            taskLoc.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-                /**
-                 * Verify location and update the map after its entered in the text box.
-                 */
-                @Override
-                public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                    Editable tempText;
+            if(taskLoc != null) {
+                taskLoc.setOnEditorActionListener(new TextView.OnEditorActionListener() {
+                    /**
+                     * Verify location and update the map after its entered in the text box.
+                     */
+                    @Override
+                    public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                        Editable tempText;
 
-                    if (actionId == EditorInfo.IME_ACTION_DONE) {
-                        tempText = taskLoc.getText();
-                        if(tempText != null) {
-                            lookUp(tempText.toString());
+                        if (actionId == EditorInfo.IME_ACTION_DONE) {
+                            tempText = taskLoc.getText();
+                            if(tempText != null) {
+                                lookUp(tempText.toString());
+                            }
                         }
+                        return false;
                     }
-                    return false;
-                }
-            });
+                });
+            }
 
              /* Initialize Google Map */
             SupportMapFragment supportMapFragment =
@@ -242,11 +255,9 @@ public class ShowTaskActivity extends ActionBarActivity {
 
             /* Initialize Text box and map according to the parameters of the current task */
             int position = getActivity().getIntent().getIntExtra("POSITION", -1); //position sent by intent
-            if(position != -1)
-            {
+            if(position != -1) {
                 TaskDetails currentTask = TaskListDB.getInstance(getActivity()).getTask(position);
-                if(currentTask.getLocation() != null)
-                {
+                if(taskLoc != null && currentTask != null && currentTask.getLocation() != null) {
                     taskLoc.setText(currentTask.getLocation());
                     lookUp(currentTask.getLocation());
                 }
@@ -259,19 +270,30 @@ public class ShowTaskActivity extends ActionBarActivity {
          * Lookup the address with the Geocoder and update map if possible
          */
         private void lookUp(String addressString) {
-            new LookUpTask().execute(addressString);
+            /* Verify Parameters */
+            if(addressString == null) {
+                return;
+            }
+
+            try {
+                new LookUpTask().execute(addressString);
+            } catch (IllegalStateException e) {
+                e.printStackTrace();
+            }
         }
 
         /**
          * Display a marker on the map and reposition the camera according to location.
          */
         private void updateMap(LatLng latLng){
-            if (googleMap == null){
-                return; //no play services
+            /* Verify Parameters */
+            if (googleMap == null || latLng == null){
+                return;
             }
 
+            /* Remove Old Marker */
             if (marker != null){
-                marker.remove(); // remove old marker
+                marker.remove();
             }
 
             /* Set Marker */
@@ -292,14 +314,26 @@ public class ShowTaskActivity extends ActionBarActivity {
         {
             @Override
             protected LatLng doInBackground(String... params) {
-                Geocoder geoCoder = new Geocoder(getActivity(), new Locale("iw_IL"));
+                /* Verify Parameters */
+                if(params == null || params[0] == null) {
+                    return null;
+                }
+
+                /* Get GeoCode Address by the given string */
+                Geocoder geoCoder = new Geocoder(getActivity());
                 try {
                     List<Address> addresses = geoCoder.getFromLocationName(params[0], 1);
-                    if (addresses.size() >= 1) {
+                    if (addresses != null && addresses.size() >= 1) {
                         Address address = addresses.get(0);
                         return new LatLng(address.getLatitude(), address.getLongitude());
                     }
                 } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (IllegalArgumentException e) {
+                    e.printStackTrace();
+                } catch (IllegalStateException e) {
+                    e.printStackTrace();
+                } catch (IndexOutOfBoundsException e) {
                     e.printStackTrace();
                 }
 
@@ -311,12 +345,11 @@ public class ShowTaskActivity extends ActionBarActivity {
              */
             @Override
             protected void onPostExecute(LatLng latLng) {
-                if(latLng != null)
-                {
+                /* Verify Parameters */
+                if(latLng != null) {
                     updateMap(latLng);
                 }
-                else
-                {
+                else {
                     Toast.makeText(getActivity(), "Location Failed!", Toast.LENGTH_SHORT).show();
                 }
             }

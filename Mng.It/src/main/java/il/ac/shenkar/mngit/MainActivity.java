@@ -1,5 +1,6 @@
 package il.ac.shenkar.mngit;
 
+import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -51,7 +52,12 @@ public class MainActivity extends ActionBarActivity {
             /* Call CreateTaskActivity */
             case R.id.action_add_task:
                 Intent intent = new Intent(getApplicationContext(), CreateTaskActivity.class);
-                startActivity(intent);
+                try {
+                    startActivity(intent);
+                } catch (ActivityNotFoundException e) {
+                    e.printStackTrace();
+                    return false;
+                }
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -89,6 +95,11 @@ public class MainActivity extends ActionBarActivity {
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                 Bundle savedInstanceState) {
+            /* Verify Parameters */
+            if(container == null || inflater == null) {
+                return null;
+            }
+
             /* Inflate the fragment's layout */
             View rootView = inflater.inflate(R.layout.fragment_main, container, false);
             if(rootView == null) {
@@ -98,9 +109,10 @@ public class MainActivity extends ActionBarActivity {
             /* Initialize Components */
             adapter = new TaskListBaseAdapter(getActivity());
             listView = (ListView) rootView.findViewById(R.id.listV_main);
-
-            /* Bind the Adapter to the List */
-            listView.setAdapter(adapter);
+            if(listView != null) {
+                /* Bind the Adapter to the List */
+                listView.setAdapter(adapter);
+            }
 
             return rootView;
         }

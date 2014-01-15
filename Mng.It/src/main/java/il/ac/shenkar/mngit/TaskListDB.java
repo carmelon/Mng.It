@@ -29,28 +29,90 @@ public class TaskListDB {
         return instance;
     }
 
+    /**
+     * Remove task from the database and the local list.
+     */
     public void removeTask(int position) {
-        db.deleteTask(taskArray.get(position).getId());
-        taskArray.remove(position);
+        if(taskArray != null) {
+            if(position >= 0 && position <= taskArray.size()) {
+                try {
+                    db.deleteTask(taskArray.get(position).getId());
+                } catch (IndexOutOfBoundsException e) {
+                    e.printStackTrace();
+                }
+                taskArray.remove(position);
+            }
+        }
     }
 
+    /**
+     * Add task to the database and the local list.
+     * Return -1 on failure.
+     */
     public long addTask(TaskDetails task) {
-        task.setId(db.addTask(task));
-        taskArray.add(task);
+        /* Verify Parameters */
+        if(task != null && taskArray != null) {
 
-        return task.getId();
+            /* Add to database */
+            long id = db.addTask(task);
+
+            /* If database didn't fail, add to local list */
+            if(id != -1) {
+                task.setId(id);
+                taskArray.add(task);
+            }
+
+            return id;
+        }
+        else {
+            return -1;
+        }
     }
 
+    /**
+     * Get the task by position from the local task array.
+     * Returns null on failure.
+     */
     public TaskDetails getTask(int position) {
-        return taskArray.get(position);
+        if(taskArray != null) {
+            if(position >= 0 && position <= taskArray.size()) {
+                try {
+                    return taskArray.get(position);
+                } catch (IndexOutOfBoundsException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return null;
     }
 
+    /**
+     * Modify a task in the local list and the database.
+     */
     public void updateTask(int position, TaskDetails task) {
-        taskArray.set(position, task);
-        db.updateTask(task);
+        if(taskArray != null && task != null) {
+            if(position >= 0 && position <= taskArray.size()) {
+                try {
+                    taskArray.set(position, task);
+                } catch (IndexOutOfBoundsException e) {
+                    e.printStackTrace();
+                    return;
+                }
+                db.updateTask(task);
+            }
+        }
     }
 
+    /**
+     * Get the number of tasks stored.
+     */
     public int getSize() {
-        return taskArray.size();
+        if(taskArray != null) {
+            return taskArray.size();
+        }
+        else {
+            return 0;
+        }
     }
 }

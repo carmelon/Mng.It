@@ -3,7 +3,9 @@ package il.ac.shenkar.mngit;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
+import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import java.util.ArrayList;
@@ -37,7 +39,11 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         String CREATE_CONTACTS_TABLE = "CREATE TABLE " + TABLE_TASKS + "("
                 + KEY_ID + " INTEGER PRIMARY KEY," + KEY_DESC + " TEXT,"
                 + KEY_LOC + " TEXT," + KEY_DONE + " TEXT" + ")";
-        db.execSQL(CREATE_CONTACTS_TABLE);
+        try {
+            db.execSQL(CREATE_CONTACTS_TABLE);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -46,7 +52,12 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         // Drop older table if existed
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_TASKS);
+        try {
+            db.execSQL("DROP TABLE IF EXISTS " + TABLE_TASKS);
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return;
+        }
 
         // Create tables again
         onCreate(db);
@@ -59,8 +70,18 @@ public class DatabaseHandler extends SQLiteOpenHelper {
     long addTask(TaskDetails task) {
         long resultId;
 
+        /* Check Parameter Validity */
+        if(task == null) {
+            return -1;
+        }
+
         /* Get the database */
-        SQLiteDatabase db = this.getWritableDatabase();
+        SQLiteDatabase db = null;
+        try {
+            db = this.getWritableDatabase();
+        } catch (SQLiteException e) {
+            e.printStackTrace();
+        }
         if(db == null) {
             return -1;
         }
@@ -89,7 +110,12 @@ public class DatabaseHandler extends SQLiteOpenHelper {
         String selectQuery = "SELECT  * FROM " + TABLE_TASKS; //query for the entire table
 
         /* Get the database */
-        SQLiteDatabase db = this.getWritableDatabase();
+        SQLiteDatabase db = null;
+        try {
+            db = this.getWritableDatabase();
+        } catch (SQLiteException e) {
+            e.printStackTrace();
+        }
         if(db == null) {
             return null;
         }
@@ -118,8 +144,18 @@ public class DatabaseHandler extends SQLiteOpenHelper {
      * Update an existing task.
      */
     public void updateTask(TaskDetails task) {
+        /* Check Parameter Validity */
+        if(task == null) {
+            return;
+        }
+
         /* Get the database */
-        SQLiteDatabase db = this.getWritableDatabase();
+        SQLiteDatabase db = null;
+        try {
+            db = this.getWritableDatabase();
+        } catch (SQLiteException e) {
+            e.printStackTrace();
+        }
         if(db == null) {
             return;
         }
@@ -142,7 +178,12 @@ public class DatabaseHandler extends SQLiteOpenHelper {
      */
     public void deleteTask(long id) {
         /* Get the database */
-        SQLiteDatabase db = this.getWritableDatabase();
+        SQLiteDatabase db = null;
+        try {
+            db = this.getWritableDatabase();
+        } catch (SQLiteException e) {
+            e.printStackTrace();
+        }
         if(db == null) {
             return;
         }
