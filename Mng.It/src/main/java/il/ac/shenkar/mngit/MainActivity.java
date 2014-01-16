@@ -1,5 +1,6 @@
 package il.ac.shenkar.mngit;
 
+import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.os.Bundle;
@@ -51,7 +52,7 @@ public class MainActivity extends ActionBarActivity {
         {
             /* Call CreateTaskActivity */
             case R.id.action_add_task:
-                Intent intent = new Intent(getApplicationContext(), CreateTaskActivity.class);
+                Intent intent = new Intent(this, CreateTaskActivity.class);
                 try {
                     startActivity(intent);
                 } catch (ActivityNotFoundException e) {
@@ -86,8 +87,18 @@ public class MainActivity extends ActionBarActivity {
      * A UI fragment containing the task list.
      */
     public static class TaskListFragment extends Fragment {
+        private ActionBarActivity activity;
         private ListView listView;
         private TaskListBaseAdapter adapter;
+
+        /**
+         * Update current activity parameter.
+         */
+        @Override
+        public void onAttach(Activity activity) {
+            super.onAttach(activity);
+            this.activity = (ActionBarActivity) activity;
+        }
 
         /**
          * Initializes the ListView object and binds it to an adapter.
@@ -96,7 +107,7 @@ public class MainActivity extends ActionBarActivity {
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                 Bundle savedInstanceState) {
             /* Verify Parameters */
-            if(container == null || inflater == null) {
+            if(container == null || inflater == null || activity == null) {
                 return null;
             }
 
@@ -107,7 +118,7 @@ public class MainActivity extends ActionBarActivity {
             }
 
             /* Initialize Components */
-            adapter = new TaskListBaseAdapter(getActivity());
+            adapter = new TaskListBaseAdapter(activity);
             listView = (ListView) rootView.findViewById(R.id.listV_main);
             if(listView != null) {
                 /* Bind the Adapter to the List */

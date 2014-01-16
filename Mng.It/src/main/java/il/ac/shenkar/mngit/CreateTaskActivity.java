@@ -1,5 +1,6 @@
 package il.ac.shenkar.mngit;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.content.IntentSender;
 import android.location.Address;
@@ -78,9 +79,18 @@ public class CreateTaskActivity extends ActionBarActivity {
      * A fragment containing the task creation functionality.
      */
     public static class CreateTaskFragment extends Fragment {
-
+        private ActionBarActivity activity;
         private EditText taskDesc;
         private Button createTaskButton;
+
+        /**
+         * Update current activity parameter.
+         */
+        @Override
+        public void onAttach(Activity activity) {
+            super.onAttach(activity);
+            this.activity = (ActionBarActivity) activity;
+        }
 
         /**
          * Initialize the EditText and the Button functionalities.
@@ -89,7 +99,7 @@ public class CreateTaskActivity extends ActionBarActivity {
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
             /* Verify Parameters */
-            if(container == null || inflater == null) {
+            if(container == null || inflater == null || activity == null) {
                 return null;
             }
 
@@ -113,7 +123,7 @@ public class CreateTaskActivity extends ActionBarActivity {
                         String description, location;
 
                         /* Get the Text information */
-                        EditText taskLoc = (EditText) getActivity().findViewById(R.id.edit_location);
+                        EditText taskLoc = (EditText) activity.findViewById(R.id.edit_location);
                         if(taskLoc == null) {
                             location = "";
                         }
@@ -140,10 +150,10 @@ public class CreateTaskActivity extends ActionBarActivity {
                         }
 
                         /* Add the task to the database */
-                        TaskListDB.getInstance(getActivity()).addTask(new TaskDetails(description, location));
+                        TaskListDB.getInstance(activity).addTask(new TaskDetails(description, location));
 
                         /* Terminate the activity */
-                        getActivity().finish();
+                        activity.finish();
                     }
                 });
             }
@@ -158,7 +168,7 @@ public class CreateTaskActivity extends ActionBarActivity {
     public static class LocationFragment extends Fragment implements
             GooglePlayServicesClient.ConnectionCallbacks,
             GooglePlayServicesClient.OnConnectionFailedListener{
-
+        private ActionBarActivity activity;
         private LocationClient locationClient;
         private GoogleMap googleMap;
         private Marker marker;
@@ -167,12 +177,21 @@ public class CreateTaskActivity extends ActionBarActivity {
                 CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000; //arbitrary error code
 
         /**
+         * Update current activity parameter.
+         */
+        @Override
+        public void onAttach(Activity activity) {
+            super.onAttach(activity);
+            this.activity = (ActionBarActivity) activity;
+        }
+
+        /**
          * Initialize the location text box, map and the location process.
          */
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
             /* Verify Parameters */
-            if(container == null || inflater == null) {
+            if(container == null || inflater == null || activity == null) {
                 return null;
             }
 
@@ -183,7 +202,7 @@ public class CreateTaskActivity extends ActionBarActivity {
             }
 
             /* Initialize the location client */
-            locationClient = new LocationClient(getActivity(), this, this);
+            locationClient = new LocationClient(activity, this, this);
 
             /* Initialize the UI objects */
             taskLoc = (EditText) rootView.findViewById(R.id.edit_location);
@@ -209,7 +228,7 @@ public class CreateTaskActivity extends ActionBarActivity {
 
             /* Initialize Google Map */
             SupportMapFragment supportMapFragment =
-                    (SupportMapFragment)getActivity().getSupportFragmentManager().findFragmentByTag("mapFragment");
+                    (SupportMapFragment) activity.getSupportFragmentManager().findFragmentByTag("mapFragment");
             googleMap = supportMapFragment.getMap();
             if (googleMap != null) {
                 googleMap.setMyLocationEnabled(true); //map available
@@ -259,7 +278,7 @@ public class CreateTaskActivity extends ActionBarActivity {
         public void onConnectionFailed(ConnectionResult connectionResult) {
             if(connectionResult != null) {
                 try {
-                    connectionResult.startResolutionForResult(getActivity(), CONNECTION_FAILURE_RESOLUTION_REQUEST);
+                    connectionResult.startResolutionForResult(activity, CONNECTION_FAILURE_RESOLUTION_REQUEST);
                 } catch (IntentSender.SendIntentException e) {
                     e.printStackTrace();
                 }
@@ -332,12 +351,12 @@ public class CreateTaskActivity extends ActionBarActivity {
             @Override
             protected LatLng doInBackground(String... params) {
                 /* Verify Parameters */
-                if(params == null || params[0] == null) {
+                if(params == null || params[0] == null || activity == null) {
                     return null;
                 }
 
                 /* Get GeoCode Address by the given string */
-                Geocoder geoCoder = new Geocoder(getActivity());
+                Geocoder geoCoder = new Geocoder(activity);
                 try {
                     List<Address> addresses = geoCoder.getFromLocationName(params[0], 1);
                     if (addresses != null && addresses.size() >= 1) {
@@ -367,7 +386,9 @@ public class CreateTaskActivity extends ActionBarActivity {
                     updateMap(latLng);
                 }
                 else {
-                    Toast.makeText(getActivity(), "Location Failed!", Toast.LENGTH_SHORT).show();
+                    if(activity != null) {
+                        Toast.makeText(activity, "Location Failed!", Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
         }
@@ -395,12 +416,12 @@ public class CreateTaskActivity extends ActionBarActivity {
                     location = locationClient.getLastLocation();
                     retries--;
                 }
-                if (location == null){
+                if (location == null || activity == null){
                     return null;
                 }
 
                 /* Decode location to an address */
-                Geocoder geoCoder = new Geocoder(getActivity());
+                Geocoder geoCoder = new Geocoder(activity);
                 try {
                     List<Address> addresses =
                             geoCoder.getFromLocation(location.getLatitude(), location.getLongitude(), 1);
@@ -414,6 +435,7 @@ public class CreateTaskActivity extends ActionBarActivity {
                 } catch (IndexOutOfBoundsException e) {
                     e.printStackTrace();
                 }
+
                 return null;
             }
 
@@ -434,7 +456,9 @@ public class CreateTaskActivity extends ActionBarActivity {
                         }
                 }
                 else {
-                    Toast.makeText(getActivity(), "Location Failed!", Toast.LENGTH_SHORT).show();
+                    if(activity != null) {
+                        Toast.makeText(activity, "Location Failed!", Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
         }

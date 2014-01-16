@@ -1,5 +1,6 @@
 package il.ac.shenkar.mngit;
 
+import android.app.Activity;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.AsyncTask;
@@ -107,10 +108,19 @@ public class ShowTaskActivity extends ActionBarActivity {
      * A fragment containing the task title.
      */
     public static class EditTaskFragment extends Fragment {
-
+        private ActionBarActivity activity;
         private EditText taskDesc;
         private Button editTaskButton;
         private int position;
+
+        /**
+         * Update current activity parameter.
+         */
+        @Override
+        public void onAttach(Activity activity) {
+            super.onAttach(activity);
+            this.activity = (ActionBarActivity) activity;
+        }
 
         /**
          * Initialize UI objects for the Title fragment.
@@ -119,7 +129,7 @@ public class ShowTaskActivity extends ActionBarActivity {
         public View onCreateView(LayoutInflater inflater, ViewGroup container,
                                  Bundle savedInstanceState) {
             /* Verify Parameters */
-            if(container == null || inflater == null) {
+            if(container == null || inflater == null || activity == null) {
                 return null;
             }
 
@@ -130,12 +140,12 @@ public class ShowTaskActivity extends ActionBarActivity {
             }
 
             /* Get the position of the task from the intent */
-            position = getActivity().getIntent().getIntExtra("POSITION", -1);
+            position = activity.getIntent().getIntExtra("POSITION", -1);
 
             /* Initialize the UI Objecsts */
             taskDesc = (EditText) rootView.findViewById(R.id.show_edit_message);
             if(position != -1 && taskDesc != null) {
-                TaskDetails currentTask = TaskListDB.getInstance(getActivity()).getTask(position);
+                TaskDetails currentTask = TaskListDB.getInstance(activity).getTask(position);
                 if(currentTask != null) {
                     taskDesc.setText(currentTask.getDescription());
                 }
@@ -152,7 +162,7 @@ public class ShowTaskActivity extends ActionBarActivity {
                         String description, location;
 
                         /* Get the Text information */
-                        EditText taskLoc = (EditText) getActivity().findViewById(R.id.show_edit_location);
+                        EditText taskLoc = (EditText) activity.findViewById(R.id.show_edit_location);
                         if(taskLoc == null) {
                             location = "";
                         }
@@ -180,16 +190,16 @@ public class ShowTaskActivity extends ActionBarActivity {
 
                         /* Update the Task */
                         if(position != -1) {
-                            TaskDetails currentTask = TaskListDB.getInstance(getActivity()).getTask(position);
+                            TaskDetails currentTask = TaskListDB.getInstance(activity).getTask(position);
                             if(currentTask != null) {
                                 currentTask.setDescription(description);
                                 currentTask.setLocation(location);
-                                TaskListDB.getInstance(getActivity()).updateTask(position, currentTask);
+                                TaskListDB.getInstance(activity).updateTask(position, currentTask);
                             }
                         }
 
                         /* Terminate the Activity */
-                        getActivity().finish();
+                        activity.finish();
                     }
                 });
             }
@@ -202,10 +212,19 @@ public class ShowTaskActivity extends ActionBarActivity {
      * A fragment to handle the location activities and information.
      */
     public static class EditTaskLocFragment extends Fragment {
-
+        private ActionBarActivity activity;
         private GoogleMap googleMap;
         private Marker marker;
         private EditText taskLoc;
+
+        /**
+         * Update current activity parameter.
+         */
+        @Override
+        public void onAttach(Activity activity) {
+            super.onAttach(activity);
+            this.activity = (ActionBarActivity) activity;
+        }
 
         /**
          * Initialize the location text box and map.
@@ -213,7 +232,7 @@ public class ShowTaskActivity extends ActionBarActivity {
         @Override
         public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
             /* Verify Parameters */
-            if(container == null || inflater == null) {
+            if(container == null || inflater == null || activity == null) {
                 return null;
             }
 
@@ -247,16 +266,16 @@ public class ShowTaskActivity extends ActionBarActivity {
 
              /* Initialize Google Map */
             SupportMapFragment supportMapFragment =
-                    (SupportMapFragment)getActivity().getSupportFragmentManager().findFragmentByTag("mapFragment");
+                    (SupportMapFragment) activity.getSupportFragmentManager().findFragmentByTag("mapFragment");
             googleMap = supportMapFragment.getMap();
             if (googleMap != null) {
                 googleMap.setMyLocationEnabled(true); //map available
             }
 
             /* Initialize Text box and map according to the parameters of the current task */
-            int position = getActivity().getIntent().getIntExtra("POSITION", -1); //position sent by intent
+            int position = activity.getIntent().getIntExtra("POSITION", -1); //position sent by intent
             if(position != -1) {
-                TaskDetails currentTask = TaskListDB.getInstance(getActivity()).getTask(position);
+                TaskDetails currentTask = TaskListDB.getInstance(activity).getTask(position);
                 if(taskLoc != null && currentTask != null && currentTask.getLocation() != null) {
                     taskLoc.setText(currentTask.getLocation());
                     lookUp(currentTask.getLocation());
@@ -315,12 +334,12 @@ public class ShowTaskActivity extends ActionBarActivity {
             @Override
             protected LatLng doInBackground(String... params) {
                 /* Verify Parameters */
-                if(params == null || params[0] == null) {
+                if(params == null || params[0] == null || activity == null) {
                     return null;
                 }
 
                 /* Get GeoCode Address by the given string */
-                Geocoder geoCoder = new Geocoder(getActivity());
+                Geocoder geoCoder = new Geocoder(activity);
                 try {
                     List<Address> addresses = geoCoder.getFromLocationName(params[0], 1);
                     if (addresses != null && addresses.size() >= 1) {
@@ -350,7 +369,9 @@ public class ShowTaskActivity extends ActionBarActivity {
                     updateMap(latLng);
                 }
                 else {
-                    Toast.makeText(getActivity(), "Location Failed!", Toast.LENGTH_SHORT).show();
+                    if(activity != null) {
+                        Toast.makeText(activity, "Location Failed!", Toast.LENGTH_SHORT).show();
+                    }
                 }
             }
         }
